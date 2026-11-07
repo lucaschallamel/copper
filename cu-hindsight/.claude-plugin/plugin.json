@@ -6,11 +6,11 @@
   "dependencies": [
     {
       "name": "cu",
-      "version": "4.1.0"
+      "version": "^4.0.0"
     }
   ],
   "description": "Push an Obsidian vault's notes into its own Hindsight memory bank, behind a local secret gate, and keep the bank in step with the vault.",
   "license": "MIT",
   "name": "cu-hindsight",
-  "version": "0.1.2"
+  "version": "0.1.3"
 }

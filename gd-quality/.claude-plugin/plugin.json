@@ -6,11 +6,11 @@
   "dependencies": [
     {
       "name": "cu",
-      "version": "4.1.0"
+      "version": "^4.0.0"
     }
   ],
   "description": "GENDEV quality and testing personas as full agent + skill + command triples.",
   "license": "MIT",
   "name": "gd-quality",
-  "version": "0.1.0"
+  "version": "0.1.1"
 }

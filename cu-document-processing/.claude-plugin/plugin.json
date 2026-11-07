@@ -6,15 +6,15 @@
   "dependencies": [
     {
       "name": "cu",
-      "version": "4.1.0"
+      "version": "^4.0.0"
     },
     {
       "name": "cu-cascade-handler",
-      "version": "0.1.0"
+      "version": "0.1.1"
     }
   ],
   "description": "Word, PDF, Excel, and PowerPoint processing skills, building on the cascade handler.",
   "license": "MIT",
   "name": "cu-document-processing",
-  "version": "0.3.0"
+  "version": "0.3.1"
 }

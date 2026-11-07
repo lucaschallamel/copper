@@ -6,11 +6,11 @@
   "dependencies": [
     {
       "name": "cu",
-      "version": "4.1.0"
+      "version": "^4.0.0"
     }
   ],
   "description": "GENDEV documentation-generation as a skill + command workflow with a deterministic helper script.",
   "license": "MIT",
   "name": "gd-docs",
-  "version": "0.1.0"
+  "version": "0.1.1"
 }

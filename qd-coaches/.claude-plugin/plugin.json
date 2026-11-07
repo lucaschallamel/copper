@@ -6,11 +6,11 @@
   "dependencies": [
     {
       "name": "cu",
-      "version": "4.1.0"
+      "version": "^4.0.0"
     }
   ],
   "description": "All 26 Quad coaching personas as reusable skill + command pairs, business, leadership, and personal well-being.",
   "license": "MIT",
   "name": "qd-coaches",
-  "version": "0.3.0"
+  "version": "0.3.1"
 }

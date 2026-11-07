@@ -15,97 +15,97 @@
       "description": "Shared cascade-style document transformation handler used by document-processing skills.",
       "name": "cu-cascade-handler",
       "source": "./cu-cascade-handler",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "description": "Backlog authoring, an agile-coaching persona, and dev-journal capture in one kit.",
       "name": "cu-delivery-pipeline",
       "source": "./cu-delivery-pipeline",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "description": "Word, PDF, Excel, and PowerPoint processing skills, building on the cascade handler.",
       "name": "cu-document-processing",
       "source": "./cu-document-processing",
-      "version": "0.3.0"
+      "version": "0.3.1"
     },
     {
       "description": "Push an Obsidian vault's notes into its own Hindsight memory bank, behind a local secret gate, and keep the bank in step with the vault.",
       "name": "cu-hindsight",
       "source": "./cu-hindsight",
-      "version": "0.1.2"
+      "version": "0.1.3"
     },
     {
       "description": "GENDEV architecture personas as full agent + skill + command triples.",
       "name": "gd-architecture",
       "source": "./gd-architecture",
-      "version": "0.2.0"
+      "version": "0.2.1"
     },
     {
       "description": "GENDEV data and AI personas (AI integration, analytics engineering, ML pipelines) as agent + skill + command triples.",
       "name": "gd-data-ai",
       "source": "./gd-data-ai",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "description": "GENDEV development family , review, refactoring, performance, dependencies, mobile, and interface design as agent + skill + command triples.",
       "name": "gd-development",
       "source": "./gd-development",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "description": "GENDEV DevOps personas as full agent + skill + command triples.",
       "name": "gd-devops",
       "source": "./gd-devops",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "description": "GENDEV documentation-generation as a skill + command workflow with a deterministic helper script.",
       "name": "gd-docs",
       "source": "./gd-docs",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "description": "GENDEV framework-support personas as full agent + skill + command triples.",
       "name": "gd-framework",
       "source": "./gd-framework",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "description": "GENDEV project-delivery and product-management personas as agent + skill + command triples.",
       "name": "gd-project",
       "source": "./gd-project",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "description": "GENDEV quality and testing personas as full agent + skill + command triples.",
       "name": "gd-quality",
       "source": "./gd-quality",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "description": "GENDEV security-analysis as an agent + skill + command triple with a reusable review checklist.",
       "name": "gd-security",
       "source": "./gd-security",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     {
       "description": "All 26 Quad coaching personas as reusable skill + command pairs, business, leadership, and personal well-being.",
       "name": "qd-coaches",
       "source": "./qd-coaches",
-      "version": "0.3.0"
+      "version": "0.3.1"
     },
     {
       "description": "Quad master-tier personas as skill + command pairs, installable per master via /kit. The set is enumerated in includes, which is the source of truth.",
       "name": "qd-masters",
       "source": "./qd-masters",
-      "version": "0.5.0"
+      "version": "0.5.1"
     },
     {
       "description": "All 48 Quad subject-matter-expert personas as skill + command pairs.",
       "name": "qd-smes",
       "source": "./qd-smes",
-      "version": "0.2.0"
+      "version": "0.2.1"
     }
   ]
 }
