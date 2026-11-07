@@ -1,0 +1,20 @@
+{
+  "author": {
+    "name": "COPPER maintainers"
+  },
+  "defaultEnabled": false,
+  "dependencies": [
+    {
+      "name": "cu",
+      "version": "4.1.0"
+    },
+    {
+      "name": "cu-cascade-handler",
+      "version": "0.1.0"
+    }
+  ],
+  "description": "Word, PDF, Excel, and PowerPoint processing skills, building on the cascade handler.",
+  "license": "MIT",
+  "name": "cu-document-processing",
+  "version": "0.3.0"
+}

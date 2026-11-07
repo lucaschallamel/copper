@@ -1,0 +1,56 @@
+{
+  "_comment": "SEC-001 no-client-literal gate config. Literals are SALTED SHA-256 hashes (NO plaintext: a plaintext denylist would itself leak the secrets in this marketplace-bound repo, and this file is scanned). Add a literal with: check-no-client-literals.py hash \"<literal>\"  then run deploy.regenerate and commit. Generic tokens that collide with ordinary words/tools (e.g. a fictional 'Sun', 'Cube') must be added as an ngram with context, not a bare word, to avoid false positives. The salt is a non-secret in-tree constant (see the script's HONEST LIMITATION note). GOVERNANCE: owner = the maintainer acting as security/DPO; review the literal set at least quarterly and whenever a new client engagement OR NDA-covered partner project is named in any kit. See ADR-028 + the framework-authoring SKILL runbook. Covers client literals AND NDA-covered partner-project literals.",
+  "salt": "copper-sec-001-no-client-literals-v1",
+  "literals": [
+    {
+      "h": "f5c7f165f02858f2e949a33871cc9595036217172b1d9c8fa1fb97168534f05f",
+      "mode": "word",
+      "n": 1
+    },
+    {
+      "h": "d34752eb0dce33e1604f42b66313336e9856eaeb0e7706caa64b1d66706dd7e8",
+      "mode": "word",
+      "n": 1
+    },
+    {
+      "h": "2c9024d825fed697ece7dd10d69903d896eff59342fd3971ff138c2f869a9e9f",
+      "mode": "word",
+      "n": 1
+    },
+    {
+      "h": "e285e565d27032690ae17b22a147d03f6ecae248a17a2393309bd7c345fba3d2",
+      "mode": "word",
+      "n": 1
+    },
+    {
+      "h": "3953f8539bb49543f877c80aa34cc0da65197cec319cdda44391408e75fb201e",
+      "mode": "ngram",
+      "n": 3
+    },
+    {
+      "h": "bab0e14925a9ca1c500b8fff9dacdc452f72899ad247f6987371da10ed21d69f",
+      "mode": "ngram",
+      "n": 2
+    },
+    {
+      "h": "ef5a854429b315611ffa1c066e8ccca5eeb688716ccb3882a758c88dc4f3aa1a",
+      "mode": "word",
+      "n": 1
+    },
+    {
+      "h": "cbccac4aaf481d155942d6b11494d7051a7547d309737abc0aa1e8aaddb218d1",
+      "mode": "ngram",
+      "n": 2
+    },
+    {
+      "h": "f204e25ca56d2f73d4bfaa76479be9aa1ac6d30e499dec81fc27b609cf4b016b",
+      "mode": "word",
+      "n": 1
+    },
+    {
+      "h": "d0363480647ae9dc0e41349f5930da6dd8e2f7bda2e1d286a16492bf75a48a12",
+      "mode": "ngram",
+      "n": 2
+    }
+  ]
+}

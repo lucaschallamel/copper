@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "COPPER maintainers"
+  },
+  "defaultEnabled": false,
+  "dependencies": [
+    {
+      "name": "cu",
+      "version": "4.1.0"
+    }
+  ],
+  "description": "Backlog authoring, an agile-coaching persona, and dev-journal capture in one kit.",
+  "license": "MIT",
+  "name": "cu-delivery-pipeline",
+  "version": "0.1.0"
+}

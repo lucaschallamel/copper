@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "COPPER maintainers"
+  },
+  "defaultEnabled": false,
+  "dependencies": [
+    {
+      "name": "cu",
+      "version": "4.1.0"
+    }
+  ],
+  "description": "GENDEV data and AI personas (AI integration, analytics engineering, ML pipelines) as agent + skill + command triples.",
+  "license": "MIT",
+  "name": "gd-data-ai",
+  "version": "0.1.0"
+}

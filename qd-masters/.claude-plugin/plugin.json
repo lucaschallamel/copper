@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "COPPER maintainers"
+  },
+  "defaultEnabled": false,
+  "dependencies": [
+    {
+      "name": "cu",
+      "version": "4.1.0"
+    }
+  ],
+  "description": "Quad master-tier personas as skill + command pairs, installable per master via /kit. The set is enumerated in includes, which is the source of truth.",
+  "license": "MIT",
+  "name": "qd-masters",
+  "version": "0.5.0"
+}

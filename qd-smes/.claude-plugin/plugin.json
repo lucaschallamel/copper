@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "COPPER maintainers"
+  },
+  "defaultEnabled": false,
+  "dependencies": [
+    {
+      "name": "cu",
+      "version": "4.1.0"
+    }
+  ],
+  "description": "All 48 Quad subject-matter-expert personas as skill + command pairs.",
+  "license": "MIT",
+  "name": "qd-smes",
+  "version": "0.2.0"
+}

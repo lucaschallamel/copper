@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "COPPER maintainers"
+  },
+  "defaultEnabled": false,
+  "dependencies": [
+    {
+      "name": "cu",
+      "version": "4.1.0"
+    }
+  ],
+  "description": "GENDEV security-analysis as an agent + skill + command triple with a reusable review checklist.",
+  "license": "MIT",
+  "name": "gd-security",
+  "version": "0.1.0"
+}

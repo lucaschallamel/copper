@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "COPPER maintainers"
+  },
+  "defaultEnabled": false,
+  "dependencies": [
+    {
+      "name": "cu",
+      "version": "4.1.0"
+    }
+  ],
+  "description": "GENDEV development family , review, refactoring, performance, dependencies, mobile, and interface design as agent + skill + command triples.",
+  "license": "MIT",
+  "name": "gd-development",
+  "version": "0.1.0"
+}

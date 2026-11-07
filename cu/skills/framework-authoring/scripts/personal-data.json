@@ -1,0 +1,40 @@
+{
+  "$comment": "US-352 , the personal-data denylist and never-migrate list. Tokens are SALTED SHA-256 hashes, never plaintext: a config that listed the names and attributes it protects would re-leak exactly what the gate exists to keep out of the repo (the same reason SEC-001's client-literals.json stores hashes). Add an entry with: check-personal-data.py hash \"LITERAL\". The salt is not a secret , it is a domain separator, so a hash here cannot be compared against one from another list.",
+  "salt": "copper-us-352-personal-data-v1",
+  "tokens": [],
+  "$never_migrate_comment": "US-352 AC6 , source paths that must never enter a kit. The gate refuses any kit file whose path or content references one. This turns 'classified as never-migrate' from an unfalsifiable claim about a file in a separate vault into a control that fails a build. RULE (US-352 C6/S5 A6): a `reason` MUST NOT enumerate the data categories involved or name a third party. This file ships publicly, and a reason reading 'political affiliation, religious belief, family composition' discloses that an identified person holds a special-category record and what it contains , a small disclosure by the very control built to prevent disclosure. Use a neutral class code; keep the detail in the private inventory.",
+  "never_migrate": [
+    {
+      "path": "Jobs/.claude/HANDOVER.md",
+      "reason": "class C , third-party and contractual material; see private inventory (US-352 AC6)"
+    },
+    {
+      "path": "Jobs/.claude/commands/q-job-apply",
+      "reason": "class B , personal dossier; see private inventory (US-356)"
+    },
+    {
+      "path": "Perso/ASL/_opencode/rules/00-The-User.md",
+      "reason": "class A , special-category personal data; see private inventory (US-355)"
+    },
+    {
+      "path": "Ecriture/Gen6/_opencode/rules/00-The-User.md",
+      "reason": "class A , FILLED identity with special-category data (belief, political values, dietary practice, family composition); zero placeholders. US-353 S2 decision 3"
+    },
+    {
+      "path": "Ecriture/Gen6/_opencode/instructions.md",
+      "reason": "class A , carries the maintainer's name in prose and points at the filled Rule 00. US-353 S2 decision 3"
+    },
+    {
+      "path": "Ecriture/Gen6/_opencode/AGENT-GUIDE.md",
+      "reason": "class A , carries the maintainer's name in a prose credit line. US-353 S2 decision 3"
+    },
+    {
+      "path": "Perso/ASL/_opencode/agents/asl-coach-tutor.md",
+      "reason": "class A , special-category data LEAKED OUT of Rule 00 into a migratable agent: lines 38/63/985/1020 carry family composition, dietary practice and ethical/spiritual values. US-355 S3 decision 1"
+    },
+    {
+      "path": "Perso/ASL/_opencode/agents/asl-agent-creator.md",
+      "reason": "class A , line 35 carries family composition; also a stale fork of core's agent-creator (US-355 S1 C1). US-355 S3 decision 1"
+    }
+  ]
+}

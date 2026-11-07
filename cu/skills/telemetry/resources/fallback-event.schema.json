@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://copper.framework/schemas/fallback-event.schema.json",
+  "title": "Fallback Telemetry Event",
+  "description": "Canonical operational record for one cascade-layer attempt during document processing. Owned by US-166. The cu-cascade-handler skill (US-167) documents a richer internal emitter view; that view maps DOWN to this record at emit time. Where the two conflict, this schema is authoritative. PRIVACY (AC6): additionalProperties is false by design so that no filename, content, or extracted-text key can ever validate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["trace_id", "timestamp", "format", "operation", "handler", "outcome", "latency_ms"],
+  "properties": {
+    "trace_id": {
+      "type": "string",
+      "description": "UUID shared by every record emitted for a single user operation (one per layer attempt).",
+      "pattern": "^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp of when the layer attempt started."
+    },
+    "format": {
+      "type": "string",
+      "enum": ["docx", "xlsx", "pptx", "pdf", "md"],
+      "description": "Target document format."
+    },
+    "operation": {
+      "type": "string",
+      "enum": ["read", "write", "generate"],
+      "description": "Cascade operation type."
+    },
+    "handler": {
+      "type": "string",
+      "description": "Handler category that produced this record. One of the fixed categories llm-native or pandoc, or a parameterised mcp-<name> / py-<lib>.",
+      "pattern": "^(llm-native|pandoc|mcp-[a-z0-9-]+|py-[a-z0-9_.-]+)$"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["success", "fallthrough", "error"],
+      "description": "Result of this layer attempt. fallthrough means the layer declined or under-yielded and the cascade moved to the next layer."
+    },
+    "latency_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Wall-clock duration of this layer attempt in milliseconds."
+    },
+    "error_class": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$",
+      "description": "Error CATEGORY token (short snake_case, e.g. timeout, low_yield, unreachable). Populated when outcome is error or fallthrough; absent otherwise. The pattern is a privacy control (AC6): it rejects free-text values such as exception messages with embedded paths so no user content can validate or persist."
+    },
+    "file_size_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Size of the target document in bytes. The ONLY size/identity signal permitted; no filename is ever recorded (AC6)."
+    }
+  }
+}

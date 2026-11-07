@@ -1,0 +1,29 @@
+#!/bin/sh
+# cu-rules: run this plugin's rules installer with the first Python 3 found
+# (python3, python, then the Windows launcher), US-369.
+here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+script="$here/../scripts/rules_install.py"
+hook=
+if [ "$1" = hook ]; then
+  hook=1 script="$here/../scripts/rules_guard.py"
+fi
+ok='import sys; sys.exit(sys.version_info < (3, 8))'
+for py in python3 python; do
+  if command -v "$py" >/dev/null 2>&1 && "$py" -c "$ok" 2>/dev/null; then
+    exec "$py" "$script" "$@"
+  fi
+done
+if command -v py >/dev/null 2>&1 && py -3 -c "$ok" 2>/dev/null; then
+  exec py -3 "$script" "$@"
+fi
+if [ -n "$hook" ]; then  # never a silent session start: shell builtins only (AC4)
+  if [ -f "$here/../scripts/safety-minimum.md" ]; then
+    while IFS= read -r line || [ -n "$line" ]; do printf '%s\n' "$line"; done \
+      < "$here/../scripts/safety-minimum.md"
+    echo
+  fi
+  echo "cu rules not checked: no Python 3.8+ found (tried python3, python, py -3)"
+  exit 0
+fi
+echo "cu-rules: no Python 3.8+ found (tried python3, python, py -3)" >&2
+exit 2

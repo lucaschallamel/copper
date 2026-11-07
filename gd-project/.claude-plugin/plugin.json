@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "COPPER maintainers"
+  },
+  "defaultEnabled": false,
+  "dependencies": [
+    {
+      "name": "cu",
+      "version": "4.1.0"
+    }
+  ],
+  "description": "GENDEV project-delivery and product-management personas as agent + skill + command triples.",
+  "license": "MIT",
+  "name": "gd-project",
+  "version": "0.1.0"
+}

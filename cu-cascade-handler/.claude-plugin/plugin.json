@@ -1,0 +1,16 @@
+{
+  "author": {
+    "name": "COPPER maintainers"
+  },
+  "defaultEnabled": false,
+  "dependencies": [
+    {
+      "name": "cu",
+      "version": "4.1.0"
+    }
+  ],
+  "description": "Shared cascade-style document transformation handler used by document-processing skills.",
+  "license": "MIT",
+  "name": "cu-cascade-handler",
+  "version": "0.1.0"
+}

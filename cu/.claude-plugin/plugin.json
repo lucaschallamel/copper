@@ -1,0 +1,9 @@
+{
+  "author": {
+    "name": "COPPER maintainers"
+  },
+  "description": "COPPER core: the white-label framework's skills, agents, commands and rules",
+  "license": "MIT",
+  "name": "cu",
+  "version": "4.1.0"
+}
