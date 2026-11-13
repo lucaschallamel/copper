@@ -1,7 +1,7 @@
 ---
 description: Run a security audit , detect vulnerabilities, review code for security,
   and validate compliance with scored findings and remediation, grounded in the gd-security-analyzer
-  skill and its bundled review checklist.
+  skill and the core security-audit method.
 ---
 
 Run a security audit on: **$ARGUMENTS**
@@ -18,9 +18,10 @@ validate against; `validation_level` (default `standard`; options: `basic`, `sta
 1. **Load the security knowledge** , Use the `gd-security:security-analyzer` skill.
 2. **Scope** , confirm the target behind `$ARGUMENTS` (web app, API, code path, infrastructure) and
    the `compliance_framework` to validate against.
-3. **Review** , work the bundled `references/security-review-checklist.md` domain by domain (OWASP
-   Top 10, authentication, input validation, cryptography, headers and CORS, compliance) at the
-   requested `validation_level`, grounding each finding in evidence.
+3. **Review** , apply the core `cu:security-audit` skill (Use the `cu:security-audit` skill.) at the
+   requested `validation_level`: guidance mode unless a full audit is asked for, each finding with
+   its trust boundary, principal, outcome and source evidence, and no target code run without the
+   sandbox controls it lists.
 4. **Report** , emit findings at or above `severity_filter` in the requested `output_format`, each
    with severity, CVSS, business impact, and developer-friendly remediation including secure code
    examples.
@@ -45,6 +46,5 @@ system , and which compliance framework should I validate against?"
 
 ---
 
-- Skill: `gd-security:security-analyzer` (owns the methodologies, the checklist, and the security
-  knowledge)
+- Skill: `gd-security:security-analyzer` (owns the methodologies and the security knowledge)
 - Related agent: the proactive `gd-security:security-analyzer` agent loads the same skill autonomously.

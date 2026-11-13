@@ -38,6 +38,29 @@ AGENT_REQUIRED = {
 AGENT_OPTIONAL = {"changelog", "namespace"}
 AGENT_ALLOWED = AGENT_REQUIRED | AGENT_OPTIONAL
 
+# The contracts above are the SOURCE contract (kits/core). The deployed `.opencode/`
+# tree is OpenCode 2's (TD-207, ADR-056): V2 keys only, because OpenCode 2 sends any key
+# it does not know in an agent's model request body. Must match
+# deploy/targets/opencode_v2.py.
+DEPLOYED_COMMAND_REQUIRED = {"description"}
+DEPLOYED_COMMAND_ALLOWED = DEPLOYED_COMMAND_REQUIRED | {
+    "agent",
+    "model",
+    "subagent",
+    "template",
+}
+DEPLOYED_AGENT_REQUIRED = {"description", "mode", "permissions"}
+DEPLOYED_AGENT_ALLOWED = DEPLOYED_AGENT_REQUIRED | {
+    "color",
+    "hidden",
+    "model",
+    "steps",
+    "disabled",
+    "variant",
+    "system",
+    "request",
+}
+
 
 def _find_repo_root() -> Path:
     """Walk up from this file to the repo root (the dir holding .git).
@@ -117,41 +140,44 @@ def validate_file(
     return errors
 
 
-def main() -> int:
-    root = Path(sys.argv[1]) if len(sys.argv) > 1 else _find_repo_root()
+def _check_dir(
+    base: Path, kind: str, required: set[str], allowed: set[str], errors: list[str]
+) -> int:
+    """Validate each `*.md` in `base/<kind>s` (or singular); return the count."""
+    found = next((d for d in (base / f"{kind}s", base / kind) if d.is_dir()), None)
+    if found is None:
+        errors.append(f"{base.name}: {kind}s directory not found")
+        return 0
+    files = sorted(found.glob("*.md"))
+    for f in files:
+        errors.extend(validate_file(f, required, allowed, f"{found.name}/{f.name}"))
+    return len(files)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
+    root = Path(args[0]) if args else _find_repo_root()
     root = root.resolve()
 
-    opencode = root / ".opencode"
     errors: list[str] = []
-
-    # Canonical layout is PLURAL (.opencode/commands, .opencode/agents) per
-    # framework-authoring/SKILL.md; accept the singular form too for portability
-    # across hosts that emit it.
-    cmd_dir = next(
-        (d for d in (opencode / "commands", opencode / "command") if d.is_dir()), None
+    counts: list[str] = []
+    # Canonical layout is PLURAL (commands/, agents/) per framework-authoring/SKILL.md;
+    # the singular form is accepted for portability across hosts that emit it.
+    source = root / "kits" / "core"
+    if (
+        source.is_dir()
+    ):  # this framework's own repository; an adopter's tree has no source
+        cmds = _check_dir(source, "command", COMMAND_REQUIRED, COMMAND_ALLOWED, errors)
+        agents = _check_dir(source, "agent", AGENT_REQUIRED, AGENT_ALLOWED, errors)
+        counts.append(f"source: {cmds} commands, {agents} agents")
+    opencode = root / ".opencode"
+    cmds = _check_dir(
+        opencode, "command", DEPLOYED_COMMAND_REQUIRED, DEPLOYED_COMMAND_ALLOWED, errors
     )
-    if cmd_dir is not None:
-        for f in sorted(cmd_dir.glob("*.md")):
-            errors.extend(
-                validate_file(
-                    f, COMMAND_REQUIRED, COMMAND_ALLOWED, f"{cmd_dir.name}/{f.name}"
-                )
-            )
-    else:
-        errors.append("commands directory not found")
-
-    agent_dir = next(
-        (d for d in (opencode / "agents", opencode / "agent") if d.is_dir()), None
+    agents = _check_dir(
+        opencode, "agent", DEPLOYED_AGENT_REQUIRED, DEPLOYED_AGENT_ALLOWED, errors
     )
-    if agent_dir is not None:
-        for f in sorted(agent_dir.glob("*.md")):
-            errors.extend(
-                validate_file(
-                    f, AGENT_REQUIRED, AGENT_ALLOWED, f"{agent_dir.name}/{f.name}"
-                )
-            )
-    else:
-        errors.append("agents directory not found")
+    counts.append(f"deployed (OpenCode 2): {cmds} commands, {agents} agents")
 
     if errors:
         print("FAIL: Frontmatter contract violations detected:")
@@ -164,12 +190,7 @@ def main() -> int:
         print("for the canonical frontmatter contract.")
         return 1
 
-    cmd_count = len(list(cmd_dir.glob("*.md"))) if cmd_dir.is_dir() else 0
-    agent_count = len(list(agent_dir.glob("*.md"))) if agent_dir.is_dir() else 0
-    print(
-        f"PASS: All {cmd_count} commands and {agent_count} agents "
-        f"conform to the frontmatter contract."
-    )
+    print(f"PASS: frontmatter contracts hold ({'; '.join(counts)}).")
     return 0
 
 

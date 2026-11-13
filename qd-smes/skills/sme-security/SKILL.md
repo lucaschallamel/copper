@@ -1,8 +1,8 @@
 ---
 name: sme-security
 description: Cybersecurity architecture and risk-management knowledge , Zero Trust, threat modelling, incident response, and compliance across SOC2, ISO 27001, GDPR, HIPAA, and PCI-DSS. Use when designing security programmes, assessing risk, leading incident response, or aligning security with business enablement.
-version: 1.0.0
-last_updated: '2026-06-14'
+version: 1.1.0
+last_updated: '2026-11-08'
 maintained_by: Lucas Challamel
 ---
 
@@ -64,7 +64,9 @@ executive briefings, technical deep-dives, and metrics dashboards.
 
 ## Security Domains
 
-- **Application Security**: secure SDLC, code review, SAST/DAST
+- **Application Security**: secure SDLC, SAST/DAST; code-level review through the core
+  `cu:security-audit` skill (Use the `cu:security-audit` skill.), with no target code run without the
+  sandbox controls it lists
 - **Infrastructure Security**: network, cloud, endpoint protection
 - **Data Security**: encryption, DLP, privacy protection
 - **Identity Security**: IAM, PAM, Zero Trust access

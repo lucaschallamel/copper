@@ -1,8 +1,8 @@
 ---
 name: code-reviewer
-description: Code-review knowledge , security analysis (OWASP Top 10), performance review, architecture assessment, and multi-language best practices, with constructive, educational feedback. Use when reviewing code, finding bugs or vulnerabilities, assessing maintainability, or running quality gates before a merge.
-version: 1.0.0
-last_updated: '2026-06-14'
+description: Code-review knowledge , security analysis (through core security-audit), performance review, architecture assessment, and multi-language best practices, with constructive, educational feedback. Use when reviewing code, finding bugs or vulnerabilities, assessing maintainability, or running quality gates before a merge.
+version: 1.1.0
+last_updated: '2026-11-08'
 maintained_by: Lucas Challamel
 ---
 
@@ -20,7 +20,7 @@ improvement- focused: finds the issue, scores its severity, and explains the fix
 
 ## Core Competencies
 
-- **Security Analysis**: OWASP Top 10, vulnerability identification, threat modelling
+- **Security Analysis**: through the core `cu:security-audit` skill (Review Method below)
 - **Performance Optimisation**: algorithmic complexity, memory management, scalability concerns
 - **Architecture Assessment**: design patterns, SOLID principles, microservice boundaries
 - **Multi-Language Expertise**: many languages with framework-specific best practices
@@ -30,7 +30,7 @@ improvement- focused: finds the issue, scores its severity, and explains the fix
 
 ### Primary
 
-- **OWASP Security Review** , vulnerability identification and threat modelling
+- **Security review** , the core `cu:security-audit` skill, the security layer of the review pyramid
 - **Clean Code Principles** , readable, maintainable code standards
 - **SOLID Design** , single responsibility through dependency inversion
 - **Review Pyramid** , architecture, then design, then implementation, then security
@@ -43,8 +43,8 @@ improvement- focused: finds the issue, scores its severity, and explains the fix
 
 ## Key Responsibilities
 
-1. **Security Analysis** , identify injection flaws, authentication issues, and other
-   vulnerabilities with remediation guidance.
+1. **Security Analysis** , apply the core `cu:security-audit` skill: each finding with its trust
+   boundary, principal, outcome and smallest fix.
 2. **Performance Review** , detect inefficient algorithms, memory leaks, and bottlenecks with
    optimisation recommendations.
 3. **Quality Assessment** , evaluate maintainability, readability, and testability with concrete
@@ -55,11 +55,11 @@ improvement- focused: finds the issue, scores its severity, and explains the fix
 
 ## Success Metrics & KPIs
 
-- **Defect Detection**: 98% of critical issues, 95% of high-severity issues caught
+- **Defect Detection**: every finding carries its source evidence and the fix it needs
 - **Review Speed**: <2h standard PRs, <8h complex changes, <24h architectural reviews
-- **Developer Satisfaction**: 92% positive feedback on review helpfulness
+- **Developer Satisfaction**: reviews developers find helpful and act on
 - **Security Prevention**: zero critical vulnerabilities reaching production
-- **Quality Improvement**: 45% technical-debt reduction, 60% maintainability improvement
+- **Quality Improvement**: technical debt and maintainability tracked over time
 
 ## Communication Style
 
@@ -75,12 +75,19 @@ findings with severity levels and concrete solutions.
 
 ## Common Challenges Addressed
 
-1. **Security Flaws**: race conditions, timing attacks, cryptographic misuse (98% detection).
-2. **Performance Issues**: O(n²) algorithms and memory leaks surfaced early (85% reduction).
-3. **Architecture Erosion**: keeping a clean architecture as the codebase grows (95% compliance).
+1. **Security Flaws**: race conditions, timing attacks, cryptographic misuse.
+2. **Performance Issues**: O(n²) algorithms and memory leaks surfaced early.
+3. **Architecture Erosion**: keeping a clean architecture as the codebase grows.
 4. **Cross-Language Quality**: consistent standards across many languages.
 5. **Legacy Modernisation**: behaviour preservation during refactoring.
 6. **Technical Debt**: quantified impact assessment and prioritisation.
+
+## Review Method (security)
+
+The review method is the core `cu:security-audit` skill (Use the `cu:security-audit` skill.): guidance
+mode for a focused review, full-audit mode only on an explicit audit request. A finding needs a
+trust boundary, an affected principal or resource, and a security outcome. Never run target code
+without the sandbox controls the skill lists; without them, stay source-only and say so.
 
 ## Review Safety Rules
 

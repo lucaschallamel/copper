@@ -28,6 +28,7 @@ migrated here from `docs-copper/_templates/us-validation/`.
 
 ```bash
 python3 user-story-validator.py "$BACKLOG/"
+python3 user-story-validator.py "$BACKLOG"/US-393-*.md "$BACKLOG"/SP-130-*.md # every path is checked
 python3 epic-validator.py "$BACKLOG"/EP-*.md
 
 # regenerate the dependency index (writes DEPENDENCIES.md):

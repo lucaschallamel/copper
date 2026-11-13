@@ -17,30 +17,36 @@ security vulnerabilities, test coverage, and performance considerations.
 
 ## Delegation & Execution Model
 
-**How this command MUST be executed.** This section prevents the most common error: attempting to
-delegate the review to a non-existent subagent.
+**How this command MUST be executed** (US-395). Read
+`${CLAUDE_PLUGIN_ROOT}/skills/framework-authoring/resources/fresh-context-review.md` first: it is the single
+home of the rule summarised here.
 
-### Default: Inline Review (the agent performs it)
+### Fresh reviewer first, then the author
 
-The agent that loads this command **performs the review itself**. It has full context: the diff, the
-file contents, the project patterns, and the review criteria defined below. No Task delegation is
-required or expected for a standard review.
+If your prompt names you as the fresh reviewer, do not start another reviewer and skip the author
+step: review, and report as the fresh reviewer.
 
-```
-Agent executes: read files -> apply review criteria -> produce structured findings -> done
-```
+1. **Fresh reviewer**: start a separate subagent for this review, never a fork or other
+   context-inheriting mode, with a prompt of paths only (this command, the story file, the diff
+   against the merge base or the changed files, the ADRs the story names, the resource above). Never
+   pass the build conversation, the plan rationale, the author's self-review or earlier findings.
+   Its report opens with an `## Inputs` section listing exactly what it was given.
+2. **Author**: the agent that loaded this command then reviews the same scope itself and adds
+   findings the fresh reviewer did not raise.
+3. **One report**: findings from both in one table with a `Source` column (`fresh`, `author`, or
+   `fresh, author`; duplicates merged at the higher severity).
 
-### Optional: Independent Adversarial Pass (hardened gates only)
-
-When cu-pipe requests an **independent adversarial pass** for a hardened S4 gate, or the user
-explicitly asks for a second pair of eyes, the agent MAY delegate a focused subtask via the Task
-tool, but **only** to an agent type that exists in the agent registry.
+When no fresh reviewer is possible (the host has no subagent tool, the reviewer cannot start, the
+host's subagent isolation is not measured, or the reviewer was given anything the exclusions list),
+the author reviews alone and the report's Inputs section opens with `Not independent: <reason>`. A
+review that is not independent is never presented as independent.
 
 | Use Case                            | Correct `subagent_type`                  | Why                                                                                                                                                    |
 | ----------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Generic independent pass            | `general-purpose`                        | General-purpose agent, no specialisation (always available)                                                                                            |
-| Codebase exploration only           | `Explore`                                | Read-only exploration, cannot produce findings (always available)                                                                                      |
+| Fresh reviewer (default)            | `general-purpose`                        | General-purpose agent, starts with no conversation (always available on Claude Code); never `fork`, which inherits the conversation                    |
 | Specialist perspective (if present) | a specialist agent from an installed kit | Only if the adopter installed a kit that ships a matching SME agent (e.g. quality-testing or enterprise-architecture); otherwise use `general-purpose` |
+
+`Explore` reads excerpts and cannot produce findings; it is not a reviewer.
 
 ### Prohibited: Non-Existent Agent Types
 
@@ -83,13 +89,14 @@ Read relevant files to understand:
 
 ### Security Vulnerabilities & Compliance
 
-- OWASP Top 10 vulnerabilities
-- Input validation and sanitisation
-- Authentication/authorisation patterns
-- Sensitive data handling
-- Injection attack vectors (SQL, XSS, command)
-- Cryptographic weaknesses
-- Swiss DPA / GDPR compliance checks
+The security method is the core `cu:security-audit` skill in guidance mode
+(`${CLAUDE_PLUGIN_ROOT}/skills/security-audit/SKILL.md`, US-393): load it and use the parts that fit the change
+(its attack classes and the domain companions the change touches). A finding needs a concrete trust
+boundary, an affected principal or resource and a security outcome; a candidate without them is not
+a confirmed finding. Guidance mode writes no files; a full audit runs only at `/cu:pipe` S5 for a
+security-sensitive story, or on the maintainer's explicit request. This review never runs target
+code without the sandbox controls the skill lists; without them, it stays source-only and says so.
+Regulatory checks (data-protection law) stay with the project's compliance rules.
 
 ### Test Coverage & Quality Assurance
 
@@ -125,14 +132,8 @@ Read relevant files to understand:
 
 ### B. Security Assessment
 
-```
-- [ ] Input validation on all external data
-- [ ] No hardcoded secrets or credentials
-- [ ] Proper error messages (no sensitive leaks)
-- [ ] Secure defaults applied
-- [ ] Rate limiting considerations
-- [ ] Audit logging where required
-```
+Apply the `cu:security-audit` skill (Phase 2 above) and report each confirmed finding with its trust
+boundary, principal, outcome and source path. The report keeps its Security row.
 
 ### C. Test Quality Assessment
 
@@ -170,6 +171,11 @@ Read relevant files to understand:
 
 ```markdown
 # Code Quality & Security Review Report
+
+## Inputs
+
+- Reviewer: fresh subagent (`general-purpose`) | Not independent: <reason>
+- Review command, story file, diff range or changed files, ADRs, any other prompt text (verbatim)
 
 ## Executive Summary
 
@@ -237,10 +243,10 @@ At the end of every review, include a structured block in this exact format:
 **Overall Status**: PASS | FAIL **Total Findings**: <count> (Critical: <n>, High: <n>, Medium: <n>,
 Low: <n>, Info: <n>)
 
-| #   | Severity  | File             | Issue                    | Recommendation         |
-| --- | --------- | ---------------- | ------------------------ | ---------------------- |
-| 1   | 🟠 High   | path/to/file:42  | Description of the issue | Recommended fix action |
-| 2   | 🟡 Medium | path/to/file:108 | Description of the issue | Recommended fix action |
+| #   | Severity  | Source | File             | Issue                    | Recommendation         |
+| --- | --------- | ------ | ---------------- | ------------------------ | ---------------------- |
+| 1   | 🟠 High   | fresh  | path/to/file:42  | Description of the issue | Recommended fix action |
+| 2   | 🟡 Medium | author | path/to/file:108 | Description of the issue | Recommended fix action |
 
 ### Exit Guidance
 

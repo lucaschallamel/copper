@@ -12,5 +12,5 @@
   "description": "GENDEV development family , review, refactoring, performance, dependencies, mobile, and interface design as agent + skill + command triples.",
   "license": "MIT",
   "name": "gd-development",
-  "version": "0.1.1"
+  "version": "0.1.2"
 }

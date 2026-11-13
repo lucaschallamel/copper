@@ -8,13 +8,48 @@ if [ "$1" = hook ]; then
   hook=1 script="$here/../scripts/rules_guard.py"
 fi
 ok='import sys; sys.exit(sys.version_info < (3, 8))'
-for py in python3 python; do
-  if command -v "$py" >/dev/null 2>&1 && "$py" -c "$ok" 2>/dev/null; then
-    exec "$py" "$script" "$@"
+run() {  # the script under the first Python 3.8+ found; 127 when there is none
+  for py in python3 python; do
+    if command -v "$py" >/dev/null 2>&1 && "$py" -c "$ok" 2>/dev/null; then
+      "$py" "$script" "$@"
+      return
+    fi
+  done
+  if command -v py >/dev/null 2>&1 && py -3 -c "$ok" 2>/dev/null; then
+    py -3 "$script" "$@"
+    return
   fi
-done
-if command -v py >/dev/null 2>&1 && py -3 -c "$ok" 2>/dev/null; then
-  exec py -3 "$script" "$@"
+  return 127
+}
+if [ "$1" = push-guard ]; then
+  script="$here/../tools/push_guard.py"
+  input= nl='
+'
+  while IFS= read -r line || [ -n "$line" ]; do input="$input$line$nl"; done
+  key='"command":' end='"description":'  # the command, not cwd or other fields
+  cmd=${input#*"$key"}
+  cmd=${cmd%%"$end"*}
+  case "$cmd" in *push* | *send-pack*) ;; *) exit 0 ;; esac
+  rc=1  # a missing guard file is "could not run", never Python's exit 2 (S7 W3)
+  if [ -f "$script" ]; then
+    printf '%s' "$input" | run
+    rc=$?
+  fi
+  case "$rc" in 0 | 2) exit "$rc" ;; esac
+  case "$cmd" in
+    *git*push* | *git*send-pack*)
+      echo "cu push guard: refused: the guard could not run (no Python 3.8+," \
+        "or it failed) and this call may run git push. Never push directly" \
+        "to main or master; push a feature branch and open a pull request." >&2
+      exit 2
+      ;;
+  esac
+  exit 0
+fi
+run "$@"
+rc=$?
+if [ "$rc" -ne 127 ]; then
+  exit "$rc"
 fi
 if [ -n "$hook" ]; then  # never a silent session start: shell builtins only (AC4)
   if [ -f "$here/../scripts/safety-minimum.md" ]; then

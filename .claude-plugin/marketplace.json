@@ -9,7 +9,7 @@
       "description": "COPPER core: the white-label framework's skills, agents, commands and rules",
       "name": "cu",
       "source": "./cu",
-      "version": "4.1.0"
+      "version": "4.2.0"
     },
     {
       "description": "Shared cascade-style document transformation handler used by document-processing skills.",
@@ -51,7 +51,7 @@
       "description": "GENDEV development family , review, refactoring, performance, dependencies, mobile, and interface design as agent + skill + command triples.",
       "name": "gd-development",
       "source": "./gd-development",
-      "version": "0.1.1"
+      "version": "0.1.2"
     },
     {
       "description": "GENDEV DevOps personas as full agent + skill + command triples.",
@@ -84,10 +84,10 @@
       "version": "0.1.1"
     },
     {
-      "description": "GENDEV security-analysis as an agent + skill + command triple with a reusable review checklist.",
+      "description": "GENDEV security-analysis as an agent + skill + command triple; the review method is core security-audit.",
       "name": "gd-security",
       "source": "./gd-security",
-      "version": "0.1.1"
+      "version": "0.2.0"
     },
     {
       "description": "All 26 Quad coaching personas as reusable skill + command pairs, business, leadership, and personal well-being.",
@@ -105,7 +105,7 @@
       "description": "All 48 Quad subject-matter-expert personas as skill + command pairs.",
       "name": "qd-smes",
       "source": "./qd-smes",
-      "version": "0.2.1"
+      "version": "0.2.2"
     }
   ]
 }

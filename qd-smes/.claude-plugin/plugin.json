@@ -12,5 +12,5 @@
   "description": "All 48 Quad subject-matter-expert personas as skill + command pairs.",
   "license": "MIT",
   "name": "qd-smes",
-  "version": "0.2.1"
+  "version": "0.2.2"
 }

@@ -3,7 +3,8 @@
 """
 Pipeline Validator - COPPER Story Delivery Pipeline
 
-Invoked by the OpenCode custom tool pipeline-validator.ts.
+Invoked by /cu-pipe: on OpenCode 2 through the cu-pipeline-validator plugin tool (TD-207),
+elsewhere directly.
 Validates evidence, status consistency, and cross-references for the cu-pipe pipeline.
 
 Usage:
@@ -17,11 +18,14 @@ Output: JSON to stdout
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -208,7 +212,7 @@ STAGE_EVIDENCE_RULES: dict[str, dict[str, Any]] = {
     },
     "S5_ARCH_SEC_COMP_REVIEW": {
         "description": "Architecture review with findings table, risk register, PASS/FAIL",
-        "checks": ["evidence_has_pass_fail"],
+        "checks": ["evidence_has_pass_fail", "security_review"],
     },
     "S6_TEST_QUALITY_VERIFY": {
         "description": "Quality gates all pass; verified_claims non-empty",
@@ -247,8 +251,14 @@ STAGE_EVIDENCE_RULES: dict[str, dict[str, Any]] = {
     # corpus-wide and post-hoc, this one reports at the moment the mistake is made.
     # Recorded as redundancy, not claimed as independent coverage.
     "S10_MERGE": {
-        "description": "Branch pushed; MR URL valid; user confirmed merge; story Done",
-        "checks": ["evidence_non_empty", "story_status_done"],
+        # US-399: the description lists what the checks do, no more.
+        "description": "Evidence present; story Done; reviewed commits in the merged head; merge approval and PR URL recorded (form, not proof)",
+        "checks": [
+            "evidence_non_empty",
+            "story_status_done",
+            "reviewed_commits",
+            "merge_approval",
+        ],
     },
     # Legacy stage names (pre-S9/S10 split)
     "S5_ARCH_SEC_COMP": {
@@ -438,17 +448,21 @@ class ValidationResult:
 # ---------------------------------------------------------------------------
 
 
+def _missing_yaml(root: Path, story_id: str) -> str:
+    """Name the root searched: run from kit source, it falls back to `kits/` (US-395)."""
+    return (
+        f"Pipeline YAML not found: {PIPELINE_DIR}/{story_id}.yaml under {root}"
+        " (pass --root <project root>)"
+    )
+
+
 def verify_stage(root: Path, story_id: str, stage: str) -> ValidationResult:
     """Verify evidence for a specific stage of a story."""
     result = ValidationResult(story_id=story_id, action="verify", stage=stage)
 
     yaml_path = _find_yaml(root, story_id)
     if not yaml_path:
-        result.add(
-            "yaml_exists",
-            False,
-            f"Pipeline YAML not found: {PIPELINE_DIR}/{story_id}.yaml",
-        )
+        result.add("yaml_exists", False, _missing_yaml(root, story_id))
         return result
     result.add("yaml_exists", True, str(yaml_path))
 
@@ -547,13 +561,61 @@ def verify_stage(root: Path, story_id: str, stage: str) -> ValidationResult:
     return result
 
 
+def _mapping(value: object) -> dict:
+    return value if isinstance(value, dict) else {}
+
+
+def _per_stage(stages: dict, key: str) -> dict:
+    """Each stage's `key` value, for the stages that record one."""
+    return {
+        k: v[key]
+        for k, v in _mapping(stages).items()
+        if isinstance(v, dict) and v.get(key)
+    }
+
+
+def _statuses(section: object) -> dict:
+    """Each entry's `status`, nothing else."""
+    return {
+        k: v.get("status") for k, v in _mapping(section).items() if isinstance(v, dict)
+    }
+
+
+def _status_fields(data: dict, stages: dict) -> dict:
+    """The pipeline state a fresh S7 reviewer may read (US-395): statuses, the change
+    surface, each stage's commit, reviewed commit and reviewers, never evidence or
+    reasons (the author's own account of the work)."""
+
+    readiness = _mapping(data.get("pr_readiness"))
+    reviewers = _per_stage(stages, "reviewers")
+    return {
+        "change_surface": {
+            k: v
+            for k, v in _mapping(data.get("change_surface")).items()
+            if isinstance(v, bool)
+        },
+        "quality_gates": _statuses(data.get("quality_gates")),
+        "closure_checks": _statuses(data.get("closure_checks")),
+        "pr_readiness": {
+            k: readiness[k] for k in ("status", "ready_for_pr") if k in readiness
+        },
+        "stage_commits": {k: str(v) for k, v in _per_stage(stages, "commit").items()},
+        "stage_reviewed_commits": {
+            k: str(v) for k, v in _per_stage(stages, "reviewed_commit").items()
+        },
+        "stage_reviewers": {
+            k: [str(r) for r in v] for k, v in reviewers.items() if isinstance(v, list)
+        },
+    }
+
+
 def show_status(root: Path, story_id: str) -> ValidationResult:
     """Show pipeline status with consistency checks."""
     result = ValidationResult(story_id=story_id, action="status")
 
     yaml_path = _find_yaml(root, story_id)
     if not yaml_path:
-        result.add("yaml_exists", False, f"Pipeline YAML not found for {story_id}")
+        result.add("yaml_exists", False, _missing_yaml(root, story_id))
         return result
     result.add("yaml_exists", True, str(yaml_path))
 
@@ -588,6 +650,7 @@ def show_status(root: Path, story_id: str) -> ValidationResult:
     result.details["schema_version"] = data.get("schema_version", "unknown")
     result.details["story_path"] = data.get("story_path", "missing")
     result.details["feature_branch"] = data.get("feature_branch", "missing")
+    result.details.update(_status_fields(data, stages))
 
     # Cross-reference with story frontmatter
     story_path = _find_story(root, story_id)
@@ -1037,6 +1100,281 @@ def _check_story_status_done(root, story_id, stage, yaml_data, stage_data, resul
         )
 
 
+REVIEW_STAGES = ("S4_CODE_REVIEW", "S5_ARCH_SEC_COMP_REVIEW", "S7_CRITICAL_REVIEW")
+_SHA = re.compile(r"[0-9a-f]{40}")
+
+
+def _git_out(root: Path, *args: str) -> tuple[int, str]:
+    proc = subprocess.run(
+        ["git", "-C", str(root), *args], capture_output=True, text=True, check=False
+    )
+    return proc.returncode, proc.stdout
+
+
+def _recorded_reviews(yaml_data: dict) -> dict:
+    """The `reviewed_commit` of each completed review stage (None when absent)."""
+    stages = _mapping(yaml_data.get("stages"))
+    return {
+        k: _mapping(stages.get(k)).get("reviewed_commit")
+        for k in REVIEW_STAGES
+        if _mapping(stages.get(k)).get("status") == "completed"
+    }
+
+
+def _review_problems(root: Path, recorded: dict, head: str) -> list[str]:
+    if head != "HEAD" and not _SHA.fullmatch(head):
+        return [f"pr_head {head!r} is not a 40-character SHA"]
+    problems = []
+    for k, sha in recorded.items():
+        if not sha:
+            problems.append(f"{k} records no reviewed_commit")
+            continue
+        if not _SHA.fullmatch(str(sha)):
+            problems.append(f"{k} reviewed_commit {sha!r} is not a 40-character SHA")
+            continue
+        code = _git_out(root, "merge-base", "--is-ancestor", str(sha), head)[0]
+        if code == 1:
+            problems.append(
+                f"{k} reviewed_commit {str(sha)[:12]} is not an ancestor of {head}"
+            )
+        elif code:
+            problems.append(
+                f"{k} reviewed_commit {str(sha)[:12]} or {head} not found locally (fetch it)"
+            )
+    return problems
+
+
+AFTER_REVIEW = "Changed after review:"
+
+
+def _listed_after_review(stage_data: dict) -> set[str]:
+    """The paths on the S10 evidence's `Changed after review:` line(s), whole."""
+    listed: set[str] = set()
+    for line in _mapping(stage_data).get("evidence") or []:
+        text = str(line)
+        if AFTER_REVIEW in text:
+            tail = text.split(AFTER_REVIEW, 1)[1]
+            # shortcut: a path containing a comma cannot be listed; none is tracked today.
+            listed |= {p.strip() for p in tail.split(",") if p.strip()}
+    return listed
+
+
+def _unlisted_changes(
+    root: Path, latest: str, head: str, stage_data: dict
+) -> list[str]:
+    """Problems with the S10 evidence's list of files changed after `latest`."""
+    code, out = _git_out(root, "diff", "--name-only", "-z", latest, head)
+    if code:
+        return [f"cannot diff {latest[:12]}..{head}"]
+    missing = sorted(
+        {f for f in out.split("\0") if f} - _listed_after_review(stage_data)
+    )
+    if not missing:
+        return []
+    return [f"S10 evidence '{AFTER_REVIEW}' does not list: " + ", ".join(missing)]
+
+
+NOT_RECORDED = "not recorded:"
+
+
+def _not_checked(
+    result: ValidationResult, message: str, check: str = "reviewed_commits"
+) -> None:
+    """Rule 07 C5: unverified is listed as a warning, never counted as checked;
+    it does not fail the verify of a stage that predates the rule."""
+    result.add(check, True, f"not checked: {message}", "warning")
+    result.warnings.append(f"{check}: not checked: {message}")
+
+
+def _latest(root: Path, shas: list[str]) -> str:
+    """The reviewed commit every other one is an ancestor of (a rework can make an
+    earlier stage's review the newest); stage order when none is."""
+    for sha in shas:
+        if all(
+            o == sha or not _git_out(root, "merge-base", "--is-ancestor", o, sha)[0]
+            for o in shas
+        ):
+            return sha
+    return shas[-1]
+
+
+def _check_reviewed_commits(root, story_id, stage, yaml_data, stage_data, result):
+    """US-395 (SP-130 rank 2): each review stage records the 40-character commit
+    its fresh reviewer read. At S10 each is an ancestor of the merged head (the
+    recorded `pr_head`, else HEAD), and the S10 evidence lists every file changed
+    after the latest review. Provenance, not a binding: an unreviewed later commit
+    still passes the ancestor test, which is why its files must be listed."""
+    recorded = _recorded_reviews(yaml_data)
+    if not any(recorded.values()):
+        _not_checked(
+            result, "no review stage records a reviewed_commit (before US-395)"
+        )
+        return
+    marked = [k for k, v in recorded.items() if str(v or "").startswith(NOT_RECORDED)]
+    for k in marked:
+        _not_checked(result, f"{k} {recorded.pop(k)}")
+    head = str(_mapping(stage_data).get("pr_head") or "HEAD")
+    problems = _review_problems(root, recorded, head)
+    if not problems and recorded:
+        latest = _latest(root, [str(v) for v in recorded.values()])
+        problems = _unlisted_changes(root, latest, head, stage_data)
+    if problems:
+        result.add("reviewed_commits", False, "; ".join(problems))
+    elif recorded:
+        result.add(
+            "reviewed_commits", True, f"reviewed commits are ancestors of {head}"
+        )
+
+
+# US-399: S10 records completed before this date predate the merge_approval record.
+MERGE_APPROVAL_SINCE = "2026-11-13"
+_PR_URL = re.compile(
+    r"https://[^/\s]+/[^/\s]+/[^/\s]+/pull/\d+/?"  # GitHub, GitHub Enterprise
+    r"|https://[^/\s]+/[^/\s]+(?:/[^/\s]+)+/-/merge_requests/\d+/?"  # GitLab
+)
+
+
+def _is_iso_time(value: object) -> bool:
+    """An ISO 8601 date AND time; a date alone (or a YAML `date`) is not one."""
+    if isinstance(value, datetime):  # YAML loads an unquoted timestamp as a datetime
+        return True
+    if not isinstance(value, str) or "T" not in value:
+        return False
+    try:
+        datetime.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
+
+
+def _default_branch(root: Path) -> str:
+    """The branch a merge lands on: what origin/HEAD names, else `main`. Not HEAD:
+    on the PR branch every head is in HEAD's history (S4 F1)."""
+    code, out = _git_out(root, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
+    return out.strip() if code == 0 and out.strip() else "main"
+
+
+_DATE = re.compile(
+    r"\d{4}-\d{2}-\d{2}(?:[T ]|$)"
+)  # a date, then a time or nothing (S7)
+
+
+def _s10_date(yaml_data: dict, stage_data: dict) -> str:
+    """The date an S10 completed, or "" (then the check runs). A completed S10
+    with no date of its own in a completed record (15 records predate the field)
+    is dated by the record's completed_at, then its initiated_at. A value that is
+    not a date counts as none, so it can never sort before the cutoff (S5 F1)."""
+    dates = [stage_data.get("completed_at")]
+    if (
+        stage_data.get("status") == "completed"
+        and yaml_data.get("status") == "completed"
+    ):
+        dates += [yaml_data.get("completed_at"), yaml_data.get("initiated_at")]
+    first = next((str(d) for d in dates if str(d or "").strip()), "")
+    return first[:10] if _DATE.match(first) else ""
+
+
+def _merge_approval_problems(root: Path, stage_data: dict) -> list[str]:
+    approval = _mapping(stage_data.get("merge_approval"))
+    problems = []
+    if not str(approval.get("quote") or "").strip():
+        problems.append("merge_approval.quote is missing or empty")
+    if not _is_iso_time(approval.get("at") or ""):
+        problems.append(
+            f"merge_approval.at {approval.get('at')!r} is not an ISO 8601 time"
+        )
+    pr_head = str(stage_data.get("pr_head") or "")
+    head = str(approval.get("head") or "")
+    if not _SHA.fullmatch(pr_head):
+        problems.append(f"pr_head {pr_head!r} is not a 40-character SHA")
+    elif head != pr_head:
+        problems.append(f"merge_approval.head {head!r} is not pr_head {pr_head[:12]}")
+    else:
+        branch = _default_branch(root)
+        code = _git_out(root, "merge-base", "--is-ancestor", pr_head, branch)[0]
+        if code == 1:
+            problems.append(
+                f"pr_head {pr_head[:12]} is not in {branch} (not merged, or merged"
+                " by squash or rebase: the check needs a merge commit)"
+            )
+        elif code:
+            problems.append(
+                f"pr_head {pr_head[:12]} or {branch} not found locally (fetch it;"
+                " without origin/HEAD run `git remote set-head origin -a`)"
+            )
+    pr_url = str(stage_data.get("pr_url") or "")
+    if not _PR_URL.fullmatch(pr_url):
+        problems.append(
+            f"pr_url {pr_url!r} is not a PR URL (form checked, not fetched)"
+        )
+    return problems
+
+
+def _check_merge_approval(root, story_id, stage, yaml_data, stage_data, result):
+    """US-399 (SP-130 rank 1): S10 records the user's approving sentence verbatim,
+    its time and the PR head it approved, plus the PR URL. Recorded, not proven:
+    the quote is agent-written (proof is US-402)."""
+    stage_data = _mapping(stage_data)
+    if str(_mapping(yaml_data).get("schema_version", "")) == str(LEGACY_SCHEMA_VERSION):
+        _not_checked(result, "legacy schema_version 1 record", "merge_approval")
+        return
+    done = _s10_date(_mapping(yaml_data), stage_data)
+    if done and done < MERGE_APPROVAL_SINCE:
+        message = f"S10 completed {done}, before the merge_approval record (US-399)"
+        _not_checked(result, message, "merge_approval")
+        return
+    problems = _merge_approval_problems(root, stage_data)
+    if problems:
+        result.add("merge_approval", False, "; ".join(problems))
+        return
+    at = _mapping(stage_data.get("merge_approval")).get("at")
+    result.add(
+        "merge_approval",
+        True,
+        f"merge approval recorded, not proven: head {str(stage_data['pr_head'])[:12]},"
+        f" at {at}; pr_url form ok (not fetched)",
+    )
+
+
+def _security_audit_dir() -> Path:
+    """The vendored skill beside this tools folder (kit source, hosts, plugin)."""
+    return Path(__file__).resolve().parent.parent / "skills" / "security-audit"
+
+
+def _check_security_review(root, story_id, stage, yaml_data, stage_data, result):
+    """US-393: the S5 security-review evidence, checked by `security_review.py`."""
+    path = Path(__file__).resolve().with_name("security_review.py")
+    if not path.is_file():
+        result.add("security_review", False, f"not found: {path} (cannot check S5)")
+        return
+    record = _mapping(yaml_data)
+    branch = record.get("feature_branch") or record.get("branch") or None
+    try:
+        spec = importlib.util.spec_from_file_location("copper_security_review", path)
+        sr = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = sr  # @dataclass resolves its module by name
+        spec.loader.exec_module(sr)
+        errors, warnings = sr.problems(
+            root,
+            PIPELINE_DIR,
+            _mapping(yaml_data),
+            _mapping(stage_data),
+            _security_audit_dir(),
+            sr.Git(root, branch),
+            story_id=story_id,
+        )
+    except Exception as error:  # fail closed with a reason, never a traceback
+        result.add("security_review", False, f"could not check S5: {error!r}")
+        return
+    for error in errors:
+        result.add("security_review", False, error)
+    for warning in warnings:
+        result.add("security_review", True, f"not checked: {warning}", "warning")
+        result.warnings.append(f"security_review: not checked: {warning}")
+    if not errors and not warnings:
+        result.add("security_review", True, "security-review evidence checked")
+
+
 _CHECK_DISPATCH = {
     "branch_exists": _check_branch_exists,
     "yaml_exists": _check_yaml_exists,
@@ -1050,6 +1388,9 @@ _CHECK_DISPATCH = {
     "quality_gates_pass": _check_quality_gates_pass,
     "dev_journal_exists": _check_dev_journal_exists,
     "story_status_done": _check_story_status_done,
+    "reviewed_commits": _check_reviewed_commits,
+    "merge_approval": _check_merge_approval,
+    "security_review": _check_security_review,
 }
 
 
@@ -1120,4 +1461,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # A crash is "could not check" (exit 2), never a failed check (exit 1): the
+    # OpenCode plugin and direct callers read 1 as a verdict (TD-207 S4).
+    try:
+        main()
+    except Exception as exc:  # every uncaught error, reported
+        import traceback
+
+        traceback.print_exc()
+        print(json.dumps({"error": f"pipeline_validator crashed: {exc!r}"}))
+        sys.exit(2)

@@ -1,8 +1,8 @@
 ---
 name: security-analyzer
-description: Application-security knowledge , OWASP Top 10, STRIDE threat modelling, NIST CSF, secure-code review, authentication and crypto auditing, and compliance validation (SOC2, ISO 27001, PCI-DSS, GDPR, HIPAA). Use when running a security audit, finding vulnerabilities, reviewing code for security, or validating compliance. Pairs with the bundled review checklist.
-version: 1.0.0
-last_updated: '2026-06-14'
+description: Application-security knowledge , OWASP Top 10, STRIDE threat modelling, NIST CSF, secure-code review, authentication and crypto auditing, and compliance validation (SOC2, ISO 27001, PCI-DSS, GDPR, HIPAA). Use when running a security audit, finding vulnerabilities, reviewing code for security, or validating compliance. Its review method is the core `cu:security-audit` skill.
+version: 2.0.0
+last_updated: '2026-11-08'
 maintained_by: Lucas Challamel
 ---
 
@@ -10,9 +10,8 @@ maintained_by: Lucas Challamel
 
 Reusable application-security knowledge. This skill is the single source of truth for the
 capability; both the `gd-security:security-analyzer` agent and the `gd-security:security-analyzer` command load it.
-The systematic review signals live in the bundled checklist ,
-`references/security-review-checklist.md` , so this skill stays narrative and the checklist is
-reusable on its own.
+How a finding is established and reported is the core `cu:security-audit` skill (Review Method below);
+this skill keeps the role, frameworks and compliance knowledge around it.
 
 ## Role Overview
 
@@ -67,11 +66,11 @@ zero-trust to prevent incidents through comprehensive audit frameworks.
 
 ## Success Metrics & KPIs
 
-- **Comprehensive Coverage**: 95% of OWASP Top 10 and authentication vulnerabilities identified with
-  evidence
-- **Audit Precision**: <5% false-positive rate with actionable remediation
-- **Compliance Validation**: 100% SOC2/ISO 27001 control verification with documented evidence
-- **Remediation Effectiveness**: 80% of critical vulnerabilities resolved within 24 hours
+- **Coverage**: every reviewed area recorded in the audit's coverage ledger, every finding with its
+  source evidence
+- **Audit Precision**: each confirmed finding carries its trace, evidence and smallest fix
+- **Compliance Validation**: SOC2/ISO 27001 controls verified with documented evidence
+- **Remediation Effectiveness**: critical and high findings fixed before release
 - **Security Posture**: zero exploited vulnerabilities in audited systems
 
 ## Communication Style
@@ -80,12 +79,12 @@ Educational with a practical focus , actionable fixes over theoretical risks; di
 risk while developer-friendly; delivers audit reports with severity levels, secure code with
 comments, OWASP references, and security checklists.
 
-## Review Checklist (bundled reference)
+## Review Method
 
-The systematic per-domain review signals are maintained in `references/security-review-checklist.md`
-, OWASP Top 10, authentication and session, input validation, cryptography, security headers and
-CORS, and compliance. Load it when performing an audit and work through each domain against the
-target.
+The review method is the core `cu:security-audit` skill (Use the `cu:security-audit` skill.): guidance
+mode for a focused review, full-audit mode only on an explicit audit request. A finding needs a
+trust boundary, an affected principal or resource, and a security outcome. Never run target code
+without the sandbox controls the skill lists; without them, stay source-only and say so.
 
 ## Tooling Knowledge Reference
 

@@ -3,6 +3,11 @@ description: Comprehensive architectural currency and consistency review across 
   and documentation
 ---
 
+> **Documentation root (TD-178)**: paths below are written against the default `docs-copper/`. A
+> project whose documentation lives elsewhere (for example `docs/`) is discovered automatically by
+> the guard scripts, or pinned with `COPPER_DOCS_ROOT`. Read `docs-copper/` here as "the
+> documentation root", not as a literal path.
+
 # /cu:arch-review
 
 Initiate comprehensive architectural review for: **$ARGUMENTS**
@@ -19,6 +24,27 @@ alignment.
 
 ---
 
+## Execution Model: Fresh Reviewer, Then the Author
+
+Run as a fresh-context review (US-395);
+`${CLAUDE_PLUGIN_ROOT}/skills/framework-authoring/resources/fresh-context-review.md` is the single home of the
+rule. If your prompt names you as the fresh reviewer, do not start another reviewer and skip the
+author step: review, and report as the fresh reviewer.
+
+1. **Fresh reviewer**: a separate subagent (`general-purpose` on Claude Code), never a fork or other
+   context-inheriting mode, given paths only: this command, the story file, the diff against the
+   merge base, the ADRs the story names, the resource above. Never the build conversation, the plan
+   rationale, the author's self-review or earlier findings. Its report opens with `## Inputs`.
+2. **Author**: then adds findings the fresh reviewer did not raise.
+3. **One findings table and one risk register**, each finding tagged in a `Source` column.
+
+When no fresh reviewer is possible (no subagent tool, it cannot start, the host's isolation is not
+measured, or the reviewer was given anything the exclusions list), the author reviews alone and the
+Inputs section opens with `Not independent: <reason>`. A review that is not independent is never
+presented as independent.
+
+---
+
 ## Phase 1: Architecture Discovery
 
 First, map the architectural landscape:
@@ -30,9 +56,9 @@ First, map the architectural landscape:
 
 Read key files to establish baseline:
 
-- `/architecture/ADR/README.md`
-- `/memory-bank/systemPatterns.md`
-- All ADR files in `/architecture/ADR/*.md`
+- `docs-copper/architecture/adr/README.md`
+- `docs-copper/memory-bank/systemPatterns.md`
+- All ADR files in `docs-copper/architecture/adr/*.md`
 
 ---
 
@@ -70,6 +96,12 @@ Read key files to establish baseline:
 - Authentication/authorisation architecture
 - Privacy boundary enforcement (Swiss DPA, GDPR)
 - Zero-trust principle adherence
+
+These checks read the ADRs and architecture documents. With `--domain=security`, they still run; a
+code-level security claim goes to the `cu:security-audit` skill
+(`${CLAUDE_PLUGIN_ROOT}/skills/security-audit/SKILL.md`, guidance mode; a full audit only at `/cu:pipe` S5 for a
+security-sensitive story, US-393), not to this review. This review never runs target code without
+the sandbox controls the skill lists; without them, it stays source-only and says so.
 
 ---
 
@@ -131,6 +163,11 @@ Read key files to establish baseline:
 ```markdown
 # Architectural Currency & Consistency Review Report
 
+## Inputs
+
+- Reviewer: fresh subagent | Not independent: <reason>
+- Review command, story file, diff range, ADRs, any other prompt text (verbatim)
+
 ## Executive Summary
 
 - **Review Scope**: [Target description]
@@ -181,10 +218,10 @@ At the end of every review, include a structured block in this exact format:
 **Overall Status**: PASS | FAIL **Total Findings**: <count> (Critical: <n>, High: <n>, Medium: <n>,
 Low: <n>, Info: <n>)
 
-| #   | Severity  | Category    | Issue                    | Recommendation         |
-| --- | --------- | ----------- | ------------------------ | ---------------------- |
-| 1   | 🟠 High   | Consistency | Description of the issue | Recommended fix action |
-| 2   | 🟡 Medium | Currency    | Description of the issue | Recommended fix action |
+| #   | Severity  | Source | Category    | Issue                    | Recommendation         |
+| --- | --------- | ------ | ----------- | ------------------------ | ---------------------- |
+| 1   | 🟠 High   | fresh  | Consistency | Description of the issue | Recommended fix action |
+| 2   | 🟡 Medium | author | Currency    | Description of the issue | Recommended fix action |
 
 ### Risk Register
 

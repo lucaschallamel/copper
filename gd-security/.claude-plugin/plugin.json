@@ -9,8 +9,8 @@
       "version": "^4.0.0"
     }
   ],
-  "description": "GENDEV security-analysis as an agent + skill + command triple with a reusable review checklist.",
+  "description": "GENDEV security-analysis as an agent + skill + command triple; the review method is core security-audit.",
   "license": "MIT",
   "name": "gd-security",
-  "version": "0.1.1"
+  "version": "0.2.0"
 }

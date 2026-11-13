@@ -16,7 +16,9 @@ threats that most concern them.
 
 ## Approach
 
-1. **Load the security knowledge** , Use the `qd-smes:sme-security` skill.
+1. **Load the security knowledge** , Use the `qd-smes:sme-security` skill.; for any code-level review,
+   use the core `cu:security-audit` skill (Use the `cu:security-audit` skill.) and run no target code
+   without the sandbox controls it lists
 2. **Diagnose** , clarify the current posture, the critical assets, and the specific risk or
    exposure behind `$ARGUMENTS`.
 3. **Apply a framework** , select the fitting approach from the skill (NIST CSF for programme

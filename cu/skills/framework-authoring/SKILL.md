@@ -1,8 +1,8 @@
 ---
 name: framework-authoring
 description: Framework-internal authoring skill providing templates and guidance for creating rules, definition-of-done documents, meeting minutes, and other framework-native artefacts. Use when creating, reviewing, or maintaining framework governance documents.
-version: 1.9.1
-last_updated: '2026-10-31'
+version: 1.11.0
+last_updated: '2026-11-13'
 maintained_by: Lucas Challamel
 applies_to: 'Primary: framework maintainers | Secondary: any agent creating framework governance documents'
 ---
@@ -33,6 +33,8 @@ governance documents should be structured and maintained.
   folder skeleton core Rule 01 dispatches to for software projects
 - Kit-authoring guide (`resources/kit-authoring-guide.md`) , the kit/1.0 rules for HAND-WRITING a
   kit, and the pointer to the asset quality standard that governs whether it is any good
+- Fresh-context review (`resources/fresh-context-review.md`) , who reviews at `/cu:pipe` S4, S5 and
+  S7, the paths-only prompt template, the Inputs section and the not-independent fallback (US-395)
 - Authoring methods: frontmatter conventions, section structure, governance standards
 
 **What this skill does NOT provide**:
@@ -282,6 +284,7 @@ Agents or users may load this skill directly when:
 | Project profile , PARA       | `resources/project-profile-para.md`               | Knowledge/second-brain folder skeleton (Rule 01 profile)   |
 | Project profile , Software   | `resources/project-profile-software.md`           | Software repo folder skeleton (Rule 01 profile)            |
 | Kit-authoring guide          | `resources/kit-authoring-guide.md`                | Hand-writing a kit/1.0 kit; points at the quality standard |
+| Fresh-context review         | `resources/fresh-context-review.md`               | Who reviews at S4, S5 and S7 and what they may see         |
 
 ---
 
@@ -364,6 +367,17 @@ agents MUST conform to this contract. The `check-frontmatter.py` validator enfor
 | `changelog` | list | Version history entries (in frontmatter, not body) |
 
 **Unknown keys are rejected** by the validator.
+
+### Deployed OpenCode 2 frontmatter (TD-207)
+
+The contract above is the **source** contract (`kits/core`). The compiled OpenCode copies are
+OpenCode 2's (ADR-056): OpenCode 2 sends any agent key it does not recognise in the model request
+body, so the compiler keeps framework keys (`version`, `last_updated`, `maintained_by`, `namespace`)
+in the source only. Deployed agents carry `description`, `mode`, `permissions` (required), plus
+`color`, `hidden`, `model`, `steps`, `disabled`, `variant`, `system` and `request` (where
+`temperature` goes, as `request.body.temperature`); deployed commands carry `description` plus
+`agent`, `model`, `subagent` and `template`. `check-frontmatter.py` checks the source contract when
+`kits/core` exists and the deployed one always.
 
 ### Rationale
 

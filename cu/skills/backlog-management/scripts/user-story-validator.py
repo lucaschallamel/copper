@@ -995,7 +995,7 @@ class UserStoryValidator:
 def main():
     """Main entry point for user story validation."""
     if len(sys.argv) < 2:
-        print("Usage: python3 validation-user-story.py <file_or_directory>")
+        print("Usage: python3 user-story-validator.py <file_or_directory> [more ...]")
         print()
         print("Examples:")
         print("  python3 validation-user-story.py US-001-user-search.md")
@@ -1003,19 +1003,23 @@ def main():
         print("  python3 validation-user-story.py ../roadmap/sample-stories/")
         sys.exit(2)
 
-    target_path = Path(sys.argv[1])
+    # Every argument is checked; reading only argv[1] passed later files unchecked.
+    target_paths = [Path(arg) for arg in sys.argv[1:]]
 
-    if not target_path.exists():
-        print(f"Error: {target_path} does not exist")
+    missing = [p for p in target_paths if not p.exists()]
+    if missing:
+        for target_path in missing:
+            print(f"Error: {target_path} does not exist")
         sys.exit(2)
 
     validator = UserStoryValidator()
 
     try:
-        if target_path.is_file():
-            validator.validate_file(target_path)
-        else:
-            validator.validate_directory(target_path)
+        for target_path in target_paths:
+            if target_path.is_file():
+                validator.validate_file(target_path)
+            else:
+                validator.validate_directory(target_path)
 
         validator.print_report()
         sys.exit(validator.get_exit_code())

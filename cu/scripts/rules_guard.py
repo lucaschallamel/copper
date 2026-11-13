@@ -16,6 +16,7 @@ import json
 import os
 import re
 import stat
+import subprocess
 import sys
 from pathlib import Path
 
@@ -215,6 +216,41 @@ def _leftover(plugin_root: Path, env: dict) -> tuple[str, str] | None:
     return deploy_check.leftover(ri.project_root(env), env)
 
 
+def _pre_push(plugin_root: Path, env: dict) -> str | None:
+    """Core only (TD-206 AC10); no project path or name reaches the context (RQ16)."""
+    tools = plugin_root / "tools"
+    if not (tools / "guard_install.py").is_file():
+        return None  # shipped with core's plugin only
+    if str(tools) not in sys.path:
+        sys.path.insert(0, str(tools))
+    import guard_install
+
+    root = str(_installer().project_root(env))
+
+    def git(*args: str) -> str | None:
+        done = subprocess.run(
+            ["git", "-C", root, *args], capture_output=True, text=True, timeout=5
+        )
+        return done.stdout.strip() if done.returncode == 0 else None
+
+    hook = git("rev-parse", "--git-path", "hooks/pre-push")
+    if hook is None:
+        return None  # not a git repository
+    path, want, head = Path(root, hook), guard_install.HOOK.encode(), b""
+    if path.is_file():  # a regular file only, never a FIFO; read no more than the hook
+        with path.open("rb") as f:
+            head = f.read(len(want) + 1)
+    if head == want:
+        return "pre-push guard: installed in this repository (/cu:guard status)."
+    if guard_install.MARKER.encode() in head:
+        return "pre-push guard: installed, changed since install (/cu:guard status)."
+    if guard_install.delegated(path):
+        return "pre-push guard: installed through your own hook (/cu:guard status)."
+    if git("config", "--get", "core.hooksPath") or path.exists():
+        return "pre-push guard: not installed; a hook exists (/cu:guard status)."
+    return "pre-push guard: not installed here; /cu:guard install adds it."
+
+
 def check_output(plugin_root: Path, env: dict) -> dict:
     """The hook JSON: the minimum first (cu only), then the status line (AC1, AC5)."""
     try:
@@ -231,6 +267,12 @@ def check_output(plugin_root: Path, env: dict) -> dict:
             f"{line}\n\n{extra[0]}",
             "; ".join(filter(None, [notice, extra[1]])),
         )
+    try:
+        guard = _pre_push(plugin_root, env)
+    except Exception:  # the pre-push status never costs the rules check (AC4)
+        guard = None
+    if guard:
+        line = f"{line}\n\n{guard}"  # context only: no notice every session
     minimum = _minimum(plugin_root)
     lines = [MINIMUM_INTRO, minimum, line] if minimum else [line]
     out = {

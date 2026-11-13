@@ -22,7 +22,7 @@ metadata generation, a secret/PII scan, and a hard user confirmation gate before
 auto-detects the git platform from the remote URL and uses the appropriate CLI (`glab` for GitLab,
 `gh` for GitHub).
 
-**Delegated from**: cu-pipe S9_CLOSE (MR creation step) **Also callable**: standalone for ad-hoc
+**Delegated from**: cu-pipe S10_MERGE (MR creation step) **Also callable**: standalone for ad-hoc
 merge/pull requests outside the pipeline
 
 **This command never merges.** Merging requires the explicit user approval rule in AGENTS.md section
@@ -602,12 +602,16 @@ mr_creation:
 
 ## Pipeline Integration (cu-pipe S10)
 
-When called from cu-pipe S9_CLOSE:
+When called from cu-pipe S10_MERGE:
 
 1. Run `/cu:mr-create` (this command)
-2. Record the MR URL and reference in the pipeline YAML `pr_creation` section
+2. Record the MR URL as `pr_url:` in the `S10_MERGE` stage, where
+   `pipeline_validator.py verify S10_MERGE` checks its form (US-399), and the reference in the
+   `pr_creation` closure check
 3. Record the gate results as `verified_claim` entries
-4. The user confirmation hard gate in this command replaces the cu-pipe S10 inline confirmation
+4. The user confirmation hard gate in this command authorises creating the MR only. It is not merge
+   approval: merging still needs the user's explicit approval at S10 (AGENTS.md), and a close PR
+   needs its own (TD-205)
 5. After MR creation, cu-pipe proceeds to the final merge-readiness summary
 
 **Minimum verified claims after S10**:
@@ -738,5 +742,5 @@ automatically.
 
 ## Related Commands
 
-- `/cu:pipe` S9_CLOSE: delegates MR/PR creation to this command
+- `/cu:pipe` S10_MERGE: delegates MR/PR creation to this command
 - `/cu:qa-gate`: quality gates that should pass before MR/PR creation

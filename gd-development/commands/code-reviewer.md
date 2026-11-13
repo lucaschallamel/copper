@@ -21,8 +21,9 @@ ask for the code path or diff and the primary concern.
 2. **Scope** , confirm the target behind `$ARGUMENTS` (file, diff, module), the `review_scope`, and
    the `language` and `project_context`.
 3. **Review** , work the review pyramid (architecture, design, implementation, security) at the
-   requested `review_depth`, grounding each finding in the code, with special attention to
-   injection, authentication, and data-handling paths.
+   requested `review_depth`, grounding each finding in the code; the security layer applies the core
+   `cu:security-audit` skill (Use the `cu:security-audit` skill.) and runs no target code without the
+   sandbox controls it lists.
 4. **Report** , emit findings at or above `severity_filter`, each with a severity level, the
    reasoning, and a concrete fix; flag any hardcoded secrets or critical issues lacking a
    remediation plan.
